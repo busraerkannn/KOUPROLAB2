@@ -1,0 +1,1242 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <time.h>
+#define DEVRE "devre.txt"
+#define BASKA "baska_dosya.txt"
+#define DEGER "deger.txt"
+#define KOMUT "komut.txt"
+#define LOG "log.txt"
+
+//Devrenin tüm bilgileri tutulur.
+struct lojik
+{
+	
+	char tum[2]; //Devredeki uçlarýn isimleri tutulur.
+	char deger[2]; //deger.txt den okutulan deðerler tutulur.
+	int deger2;    //deger.txt den okutulan deðerler int' e çevirilerek burada tutulur.
+	char devreUc[2]; //S komutundaki uç/uçlarýn bilgisi tutulur.
+	int ilkDeger;	//S komutundaki uç/uçlarýn ilk deðeri tutulur.
+	int sonDeger;	//S komutundaki uç/uçlarýn son deðeri tutulur.
+	int ns;			//S komutundaki nanosaniye tutulur.
+};
+
+void kapiNAND(struct lojik *d,int j,int z,int x,char islemKapi[5][5],int k,int dizi[])
+{
+	int sonuc=1;	//Kapý iþleminin çözümünde sonucu bulmak için kullanýlýr.
+	int giris[5]; 	//Kapý iþleminde kullanýlcak deðerler tutulur.
+	int i=0;		
+	int s=2;		
+	int t=0;
+	int nanosaniye=dizi[0];		//Geçen süre tutulur.
+	int w=dizi[1];				//S komutundaki struct ýn boyutu tutulur.
+	int n=sizeof(islemKapi);	//islemKapi nýn boyutu bulunur.
+	etiket1:
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki girisler bulunur ve deðerler atanýr.
+		if(strcmp(islemKapi[s],d[i].tum)==0)
+		{
+			
+			giris[t]=d[i].deger2;
+			t++;
+		}
+	}
+	s++;
+	if(s!=n)
+	{
+		goto etiket1;
+	}
+	else
+	{
+		goto etiket;
+	}
+	etiket:
+	//Kapi iþlemi yapýlýr.
+	for(i=0;i<t;i++)
+	{
+		sonuc*=giris[i];
+	}
+	//Nand kapýsýna göre iþlem yapýldýðý için sonucun deðili alýnýr.	
+	if(sonuc==0)
+	{
+		sonuc=1;
+	}
+	//Nand kapýsýna göre iþlem yapýldýðý için sonucun deðili alýnýr.
+	else if(sonuc==1)
+	{
+		sonuc=0;
+	}
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki çýkýþ ucu bulunur ve sonuc deðeri atanýr.
+		if(strcmp(islemKapi[1],d[i].tum)==0)
+		{
+			//Devreyi simule etmek için deðerler tutulur.
+			strcpy(d[w].devreUc,d[i].tum); 
+			d[w].ilkDeger=d[i].deger2;
+			d[i].deger2=sonuc;
+			d[w].sonDeger=d[i].deger2;
+		}
+	}
+	int sure=atoi(islemKapi[n]);	//islemKapi nýn nanosaniye deðeri int'e çevirilir.
+	
+	if(sure>=nanosaniye)
+	{
+		while(1)
+		{
+			if((sure-nanosaniye)==0)
+			{
+				break;
+			}
+			nanosaniye++;
+		}
+	}
+	d[w].ns=nanosaniye;
+	w++;
+	nanosaniye++;
+	dizi[0]=nanosaniye;
+	dizi[1]=w;
+}
+void kapiXOR(struct lojik *d,int j,int z,int x,char islemKapi[5][5],int k,int dizi[])
+{
+	int sonuc;			//Kapý iþleminin çözümünde sonucu bulmak için kullanýlýr.
+	int giris[5];		//Kapý iþleminde kullanýlcak deðerler tutulur.
+	int i=0;
+	int s=2;
+	int t=0;
+	int n=sizeof(islemKapi);	//islemKapi nýn boyutu bulunur.
+
+	int nanosaniye=dizi[0];		//Geçen süre tutulur.
+	int w=dizi[1];				//S komutundaki struct ýn boyutu tutulur.
+	etiket1:
+	
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki girisler bulunur ve deðerler atanýr.
+		if(strcmp(islemKapi[s],d[i].tum)==0)
+		{
+			giris[t]=d[i].deger2;
+			t++;
+		}
+	}
+	s++;
+	if(s!=n)
+	{
+		goto etiket1;
+	}
+	else
+	{
+		goto etiket;
+	}
+	
+	etiket:
+	//XOR kapýsýna göre iþlemler yapýlýr.
+	if((giris[0]==1 && giris[1]==1) || (giris[0]==0 && giris[1]==0))
+	{
+		sonuc=0;	
+	}
+	//XOR kapýsýna göre iþlemler yapýlýr.
+	else if((giris[0]==0 && giris[1]==1) || (giris[0]==1 && giris[1]==0))
+	{
+		sonuc=1;	
+	} 
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki çýkýþ ucu bulunur ve sonuc deðeri atanýr.
+		if(strcmp(islemKapi[1],d[i].tum)==0)
+		{
+			//Devreyi simule etmek için deðerler tutulur.
+			strcpy(d[w].devreUc,d[i].tum);
+			d[w].ilkDeger=d[i].deger2;
+			d[i].deger2=sonuc;
+			d[w].sonDeger=d[i].deger2;
+		}
+	}
+	
+	int sure=atoi(islemKapi[n]);		//islemKapi nýn nanosaniye deðeri int'e çevirilir.
+	if(sure>=nanosaniye)
+	{
+		while(1)
+		{
+			if((sure-nanosaniye)==0)
+			{
+				break;
+			}
+			nanosaniye++;
+		}
+	}
+	d[w].ns=nanosaniye;
+	w++;
+	nanosaniye++;
+	dizi[0]=nanosaniye;
+	dizi[1]=w;
+}
+void kapiNOR(struct lojik *d,int j,int z,int x,char islemKapi[5][5],int k,int dizi[])
+{
+	int sonuc=0;		//Kapý iþleminin çözümünde sonucu bulmak için kullanýlýr.
+	int giris[5];		//Kapý iþleminde kullanýlcak deðerler tutulur.
+	int i=0;
+	int s=2;
+	int t=0;
+	int nanosaniye=dizi[0];		//Geçen süre tutulur.
+	int w=dizi[1];				//S komutundaki struct ýn boyutu tutulur.
+	int n=sizeof(islemKapi);	//islemKapi nýn boyutu bulunur.
+
+	etiket1:
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki girisler bulunur ve deðerler atanýr.
+		if(strcmp(islemKapi[s],d[i].tum)==0)
+		{
+			giris[t]=d[i].deger2;
+			t++;
+		}
+	}
+	s++;
+	if(s!=n)
+	{
+		goto etiket1;
+	}
+	else
+	{
+		goto etiket;
+	}
+	etiket:
+	//Kapý iþlemleri yapýlýr.
+	for(i=0;i<t;i++)
+	{
+		sonuc+=giris[i];
+	}	
+	//NOR kapýsýna göre iþlem yapýldýðý için sonucun deðili alýnýr.
+	if(sonuc==0)
+	{
+		sonuc=1;
+	}
+	//NOR kapýsýna göre iþlem yapýldýðý için sonucun deðili alýnýr.
+	else if(sonuc==1 || sonuc==2)
+	{
+		sonuc=0;
+	}
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki çýkýþ ucu bulunur ve sonuc deðeri atanýr.
+		if(strcmp(islemKapi[1],d[i].tum)==0)
+		{
+			//Devreyi simule etmek için deðerler tutulur.
+			strcpy(d[w].devreUc,d[i].tum);
+			d[w].ilkDeger=d[i].deger2;
+			d[i].deger2=sonuc;
+			d[w].sonDeger=d[i].deger2;
+		}
+	}
+	int sure=atoi(islemKapi[n]);	//islemKapi nýn nanosaniye deðeri int'e çevirilir.
+	if(sure>=nanosaniye)
+	{
+		while(1)
+		{
+			if((sure-nanosaniye)==0)
+			{
+				break;
+			}
+			nanosaniye++;
+		}
+	}
+	d[w].ns=nanosaniye;
+	w++;
+	nanosaniye++;
+	dizi[0]=nanosaniye;
+	dizi[1]=w;
+}
+void kapiAND(struct lojik *d,int j,int z,int x,char islemKapi[5][5],int k,int dizi[])
+{
+	int sonuc=1;		//Kapý iþleminin çözümünde sonucu bulmak için kullanýlýr.
+	int giris[5];		//Kapý iþleminde kullanýlcak deðerler tutulur.
+	int i=0;
+	int s=2;
+	int t=0;
+	
+	int nanosaniye=dizi[0];		//Geçen süre tutulur.
+	int w=dizi[1];				//S komutundaki struct ýn boyutu tutulur.
+	int n=sizeof(islemKapi);	//islemKapi nýn boyutu bulunur.			
+	etiket1:
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki girisler bulunur ve deðerler atanýr.
+		if(strcmp(islemKapi[s],d[i].tum)==0)
+		{
+			giris[t]=d[i].deger2;
+			t++;
+		}
+	}
+	s++;
+	if(s!=n)
+	{
+		goto etiket1;
+	}
+	else
+	{
+		goto etiket;
+	}
+	etiket:
+	//AND Kapýsýna göre iþlemler yapýlýr.
+	for(i=0;i<t;i++)
+	{
+		sonuc*=giris[i];
+	}	
+	if(sonuc==0)
+	{
+		sonuc=0;
+	}
+	else if(sonuc==1)
+	{
+		sonuc=1;
+	}
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki çýkýþ ucu bulunur ve sonuc deðeri atanýr.
+		if(strcmp(islemKapi[1],d[i].tum)==0)
+		{
+			//Devreyi simule etmek için deðerler tutulur.
+			strcpy(d[w].devreUc,d[i].tum);
+			d[w].ilkDeger=d[i].deger2;
+			d[i].deger2=sonuc;
+			d[w].sonDeger=d[i].deger2;
+		}
+	}
+	int sure=atoi(islemKapi[n]);	//islemKapi nýn nanosaniye deðeri int'e çevirilir.	
+	if(sure>=nanosaniye)
+	{
+		while(1)
+		{
+			if((sure-nanosaniye)==0)
+			{
+				break;
+			}
+			nanosaniye++;
+		}
+	}
+	d[w].ns=nanosaniye;
+	w++;
+	nanosaniye++;
+	dizi[0]=nanosaniye;
+	dizi[1]=w;
+}
+void kapiOR(struct lojik *d,int j,int z,int x,char islemKapi[5][5],int k,int dizi[])
+{
+	int sonuc=0;		//Kapý iþleminin çözümünde sonucu bulmak için kullanýlýr.
+	int giris[5];		//Kapý iþleminde kullanýlcak deðerler tutulur.
+	int i=0;
+	int s=2;
+	int t=0;
+	int nanosaniye=dizi[0];		//Geçen süre tutulur.
+	int w=dizi[1];				//S komutundaki struct ýn boyutu tutulur.
+	int n=sizeof(islemKapi);	//islemKapi nýn boyutu bulunur.	
+	etiket1:
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki girisler bulunur ve deðerler atanýr.
+		if(strcmp(islemKapi[s],d[i].tum)==0)
+		{
+			giris[t]=d[i].deger2;
+			t++;
+		}
+	}
+	s++;
+	if(s!=n)
+	{
+		goto etiket1;
+	}
+	else
+	{
+		goto etiket;
+	}
+	etiket:
+	//OR Kapý iþlemleri yapýlýr.
+	for(i=0;i<t;i++)
+	{
+		sonuc+=giris[i];
+	}
+	if(sonuc==0)
+	{
+		sonuc=0;
+	}
+	else if(sonuc==1 || sonuc==2)
+	{
+		sonuc=1;
+	}
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki çýkýþ ucu bulunur ve sonuc deðeri atanýr.
+		if(strcmp(islemKapi[1],d[i].tum)==0)
+		{
+			//Devreyi simule etmek için deðerler tutulur.
+			strcpy(d[w].devreUc,d[i].tum);
+			d[w].ilkDeger=d[i].deger2;
+			d[i].deger2=sonuc;
+			d[w].sonDeger=d[i].deger2;
+		}
+	}
+	int sure=atoi(islemKapi[n]);	//islemKapi nýn nanosaniye deðeri int'e çevirilir.
+	if(sure>=nanosaniye)
+	{
+		while(1)
+		{
+			if((sure-nanosaniye)==0)
+			{
+				break;
+			}
+			nanosaniye++;
+		}
+	}
+	d[w].ns=nanosaniye;
+	w++;
+	nanosaniye++;
+	dizi[0]=nanosaniye;
+	dizi[1]=w;
+}
+void kapiNOT(struct lojik *d,int j,int z,int x,char islemKapi[5][5],int k,int dizi[])
+{
+	int sonuc;			//Kapý iþleminin çözümünde sonucu bulmak için kullanýlýr.
+	int giris;		//Kapý iþleminde kullanýlcak deðerler tutulur.
+	int i=0;
+	int s=2;
+	int t=0;
+	int n=sizeof(islemKapi);	//islemKapi nýn boyutu bulunur.
+	int nanosaniye=dizi[0];		//Geçen süre tutulur.
+	int w=dizi[1];				//S komutundaki struct ýn boyutu tutulur.
+	etiket1:
+	for(i=0;i<k;i++)
+	{
+		//islemKapi daki girisler bulunur ve deðerler atanýr.
+		if(strcmp(islemKapi[s],d[i].tum)==0)
+		{
+			giris=d[i].deger2;
+		}
+	}
+		s++;
+	if(s!=n)
+	{
+		goto etiket1;
+	}
+	else
+	{
+		goto etiket;
+	}
+	etiket:
+	//NOT kapýsýna göre iþlemler yapýlýr.
+	if(giris==0)
+	{
+		sonuc=1;
+	}
+	else if(giris==1)
+	{
+		sonuc=0;
+	}
+	for(i=0;i<k;i++)
+	{
+		//islemKapi nýn nanosaniye deðeri int'e çevirilir.
+		if(strcmp(islemKapi[1],d[i].tum)==0)
+		{
+			//Devreyi simule etmek için deðerler tutulur.
+			strcpy(d[w].devreUc,d[i].tum);
+			d[w].ilkDeger=d[i].deger2;
+			d[i].deger2=sonuc;
+			d[w].sonDeger=d[i].deger2;
+		}
+	}
+	int sure=atoi(islemKapi[n]);	//islemKapi nýn nanosaniye deðeri int'e çevirilir.
+	if(sure>=nanosaniye)
+	{
+		while(1)
+		{
+			if((sure-nanosaniye)==0)
+			{
+				break;
+			}
+			nanosaniye++;
+		}
+	}
+	d[w].ns=nanosaniye;
+	w++;
+	nanosaniye++;
+	dizi[0]=nanosaniye;
+	dizi[1]=w;
+}
+void kapiIslem(struct lojik *d,char uc[],char kapi1[5][5],char kapi2[5][5],char kapi3[5][5],int j,int z,int x,int k,int dizi[])
+{
+	int i=0,s=0,t=0,var1=0,var2=0,var3=0,p;
+	char islemKapi1[5][5];		//Ýþlem yapýlacak ilk kapýnýn deðerleri tutulur.	
+	char islemKapi2[5][5];		//Ýþlem yapýlacak ikinci kapýnýn deðerleri tutulur.
+	char islemKapi3[5][5];		//Ýþlem yapýlacak üçüncü kapýnýn deðerleri tutulur.
+	char islemKapi4[5][5];		//Ýþlem tekrarý yapýlacak kapýnýn deðerleri tutulur.
+	int kapiSure1=atoi(kapi1[j]);		//kapi1'in nanosaniye deðeri int'e çevirilir.
+	int kapiSure2=atoi(kapi2[x]);		//kapi2'in nanosaniye deðeri int'e çevirilir.
+	int kapiSure3=atoi(kapi3[z]);		//kapi3'in nanosaniye deðeri int'e çevirilir.
+	for(p=2;p<j;p++)
+	{
+		//Deðiþmesi istenilen ucun deðeri 1 yapýlýr.
+		if(strcmp(uc,kapi1[p])==0)
+		{
+			var1=1;
+		}
+		
+	}
+	for(p=2;p<x;p++)
+	{
+		//Deðiþmesi istenilen ucun deðeri 1 yapýlýr.
+		if(strcmp(uc,kapi2[p])==0)
+		{
+			var2=1;
+		}
+	}
+	for(p=2;p<z;p++)
+	{
+		//Deðiþmesi istenilen ucun deðeri 1 yapýlýr.
+		if(strcmp(uc,kapi3[p])==0)
+		{
+			var3=1;
+		}
+	}
+	if(var1==1 && var2==1)
+	{
+
+		//kapi1 ve kapi2'nin süreleri karþýlaþtýrýlýr.
+		if(kapiSure1<kapiSure2)
+		{
+		//kapi1'in süresi küçük ise islemKapi1'e deðerleri kopyalanýr.
+		while(i<=j)
+		{
+			strcpy(islemKapi1[i],kapi1[i]);
+			i++;
+		}
+		//kapi2 ve kapi3'ün süreleri karþýlaþtýrýlýr.
+		if(kapiSure2<kapiSure3)
+		{
+			while(s<=x && t<=z)
+			{
+				strcpy(islemKapi2[s],kapi2[s]);		//kapi2'in süresi küçük ise islemKapi2'ye deðerleri kopyalanýr.
+				strcpy(islemKapi3[t],kapi3[t]);		//kapi3'ün deðerleri islemkapi3'e kopyalanýr.
+				s++;
+				t++;
+			}
+		}
+		//Kapý süreleri çakýþýyor mu diye kontrol edilir.
+		else if(kapiSure2==(kapiSure3+kapiSure1))
+		{
+			//2 kapýdan birinin rastgele seçilmesi için iþlem yapýlýr.
+			srand(time(NULL)); 
+			int rastgele=1+rand()%2;
+			//kapi2 önce iþleme alýnýr.
+			if(rastgele==1)
+			{
+				while(s<=x && t<=z)
+				{
+					strcpy(islemKapi2[s],kapi2[s]);				//kapi2'nin deðerleri islemKapi2'e  kopyalanýr.
+					strcpy(islemKapi3[t],kapi3[t]);				//kapi3'ün deðerleri islemkapi3'e kopyalanýr.
+					s++;
+					t++;
+				}
+			}
+			//kapi3 önce iþleme alýnýr.
+			else if(rastgele==2)
+			{
+				while(s<=x && t<=z)
+				{
+					strcpy(islemKapi2[t],kapi3[t]);				//kapi3'ün deðerleri islemKapi2'e  kopyalanýr.
+					strcpy(islemKapi3[s],kapi2[s]);				//kapi2'nin deðerleri islemKapi3'e  kopyalanýr.
+					strcpy(islemKapi4[t],kapi3[t]);				//Ýþlem tekrarý olacaðý için kapi3'ün deðerleri islemKapi4'e kopyalanýr.
+					s++;
+					t++;
+					
+				}
+			}
+		}
+		else
+		{
+			while(s<=x && t<=z)
+			{
+				strcpy(islemKapi2[t],kapi3[t]);		//kapi3'ün deðerleri islemKapi2'e  kopyalanýr.
+				strcpy(islemKapi3[s],kapi2[s]);		//kapi2'nin deðerleri islemKapi3'e  kopyalanýr.
+				s++;
+				t++;
+			}
+		}
+	}
+	//kapi1 ve kapi2'nin süreleri karþýlaþtýrýlýr.
+	else if(kapiSure1>kapiSure2)
+	{
+		//kapi2'nin süresi küçük ise islemKapi1'e deðerleri kopyalanýr.
+		while(i<=x)
+		{
+			strcpy(islemKapi1[i],kapi2[i]);		
+			i++;
+		}
+		//kapi1 ve kapi3'ün süreleri karþýlaþtýrýlýr.
+		if(kapiSure1<kapiSure3)
+		{
+			while(s<=j && t<=z)
+			{
+				strcpy(islemKapi2[s],kapi1[s]);		//kapi1'in süresi küçük ise deðerleri islemKapi2'ye kopyalanýr.
+				strcpy(islemKapi3[t],kapi3[t]);		//kapi3'ün deðerleri islemKapi3'e kopyalanýr.
+				s++;
+				t++;
+			}
+		}
+		//Kapý süreleri çakýþýyor mu diye kontrol edilir.
+		else if(kapiSure1==(kapiSure3+kapiSure2))
+		{
+			//2 kapýdan birinin rastgele seçilmesi için iþlem yapýlýr.
+			srand(time(NULL)); 
+			int rastgele=1+rand()%2;
+			//kapi1 önce iþleme alýnýr.
+			if(rastgele==1)
+			{
+				while(s<=j && t<=z)
+				{
+					strcpy(islemKapi2[s],kapi1[s]);		//kapi1'in deðerleri islemkapi2'ye kopyalanýr.
+					strcpy(islemKapi3[t],kapi3[t]);		//kapi3'ün deðerleri islemKapi3'e kopyalanýr.
+					s++;
+					t++;
+				}
+			}
+			//kapi3 önce iþleme alýnýr.
+			else if(rastgele==2)
+			{
+				while(s<=j && t<=z)
+				{
+					strcpy(islemKapi2[t],kapi3[t]);		//kapi3'ün deðerleri islemKapi2'e kopyalanýr.
+					strcpy(islemKapi3[s],kapi1[s]);		//kapi1'ün deðerleri islemKapi3'e kopyalanýr.
+					strcpy(islemKapi4[t],kapi3[t]);		//Ýþlem tekrarý olacaðý için kapi3'ün deðerleri islemKapi4'e kopyalanýr.
+					s++;
+					t++;
+				}
+			}
+		}
+		else
+		{
+			while(s<=j && t<=z)
+				{
+					strcpy(islemKapi2[t],kapi3[t]);		//kapi3'ün deðerleri islemKapi2'ye kopyalanýr.
+					strcpy(islemKapi3[s],kapi1[s]);		//kapi1'in deðerleri islemKapi3'e kopyalanýr.
+					s++;
+					t++;
+				}
+		}		
+	}
+	}
+	else if(var1==1 && var2==0)
+	{
+		while(i<=j && t<=z)
+		{
+			strcpy(islemKapi1[i],kapi1[i]);
+			strcpy(islemKapi2[t],kapi3[t]);
+			i++;
+			t++;
+		}
+	}
+	else if(var1==0 && var2==1)
+	{
+		
+		while(s<=x && t<=z)
+		{
+			strcpy(islemKapi1[s],kapi2[s]);
+			strcpy(islemKapi2[t],kapi3[t]);
+			s++;
+			t++;
+		}
+	}
+	else if(var3==1)
+	{
+		while(t<=z)
+		{
+			strcpy(islemKapi1[t],kapi3[t]);
+			t++;
+		}
+	}
+	//islemKapi1'in kapi türüne göre fonksiyon çaðrýlýr.
+	if(strcmp(islemKapi1[0],"NAND")==0)
+	{
+		kapiNAND(d,j,z,x,islemKapi1,k,dizi);
+	}
+	if(strcmp(islemKapi1[0],"AND")==0)
+	{
+		kapiAND(d,j,z,x,islemKapi1,k,dizi);
+	}
+	if(strcmp(islemKapi1[0],"NOR")==0)
+	{
+		kapiNOR(d,j,z,x,islemKapi1,k,dizi);
+	}
+	if(strcmp(islemKapi1[0],"OR")==0)
+	{
+		kapiOR(d,j,z,x,islemKapi1,k,dizi);
+	}
+	if(strcmp(islemKapi1[0],"XOR")==0)
+	{
+		kapiXOR(d,j,z,x,islemKapi1,k,dizi);
+	}
+	if(strcmp(islemKapi1[0],"NOT")==0)
+	{
+		kapiNOT(d,j,z,x,islemKapi1,k,dizi);
+	}
+	//islemKapi2'nin kapi türüne göre fonksiyon çaðrýlýr.
+	if(strcmp(islemKapi2[0],"NAND")==0)
+	{
+		kapiNAND(d,j,z,x,islemKapi2,k,dizi);
+	}
+	if(strcmp(islemKapi2[0],"AND")==0)
+	{
+		kapiAND(d,j,z,x,islemKapi2,k,dizi);
+	}
+	if(strcmp(islemKapi2[0],"NOR")==0)
+	{
+		kapiNOR(d,j,z,x,islemKapi2,k,dizi);
+	}
+	if(strcmp(islemKapi2[0],"OR")==0)
+	{
+		kapiOR(d,j,z,x,islemKapi2,k,dizi);
+	}
+	if(strcmp(islemKapi2[0],"XOR")==0)
+	{
+		kapiXOR(d,j,z,x,islemKapi2,k,dizi);
+	}
+	if(strcmp(islemKapi2[0],"NOT")==0)
+	{
+		kapiNOT(d,j,z,x,islemKapi2,k,dizi);
+	}
+	//islemKapi3'ün kapi türüne göre fonksiyon çaðrýlýr.
+	if(strcmp(islemKapi3[0],"NAND")==0)
+	{
+		kapiNAND(d,j,z,x,islemKapi3,k,dizi);
+	}
+	if(strcmp(islemKapi3[0],"AND")==0)
+	{
+		kapiAND(d,j,z,x,islemKapi3,k,dizi);
+	}
+	if(strcmp(islemKapi3[0],"NOR")==0)
+	{
+		kapiNOR(d,j,z,x,islemKapi3,k,dizi);
+	}
+	if(strcmp(islemKapi3[0],"OR")==0)
+	{
+		kapiOR(d,j,z,x,islemKapi3,k,dizi);
+	}
+	if(strcmp(islemKapi3[0],"XOR")==0)
+	{
+		kapiXOR(d,j,z,x,islemKapi3,k,dizi);
+	}
+	if(strcmp(islemKapi3[0],"NOT")==0)
+	{
+		kapiNOT(d,j,z,x,islemKapi3,k,dizi);
+	}
+	//islemKapi4'ün kapi türüne göre fonksiyon çaðrýlýr.
+	if(strcmp(islemKapi4[0],"NAND")==0)
+	{
+		kapiNAND(d,j,z,x,islemKapi4,k,dizi);
+	}
+	if(strcmp(islemKapi4[0],"AND")==0)
+	{
+		kapiAND(d,j,z,x,islemKapi4,k,dizi);
+	}
+	if(strcmp(islemKapi4[0],"NOR")==0)
+	{
+		kapiNOR(d,j,z,x,islemKapi4,k,dizi);
+	}
+	if(strcmp(islemKapi4[0],"OR")==0)
+	{
+		kapiOR(d,j,z,x,islemKapi4,k,dizi);
+	}
+	if(strcmp(islemKapi4[0],"XOR")==0)
+	{
+		kapiXOR(d,j,z,x,islemKapi4,k,dizi);
+	}
+	if(strcmp(islemKapi4[0],"NOT")==0)
+	{
+		kapiNOT(d,j,z,x,islemKapi4,k,dizi);
+	}
+	
+}
+
+void komutY(char komut[],char uc[])	
+{
+	
+	FILE *dosya4,*dosya;		//Dosyalarý açmak için tanýmlanýrlar.
+	char c; 					//devreyi yazdýrmak için kullanýlýr.,
+	//LOG isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya4=fopen(LOG,"ab+"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//DEVRE isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya=fopen(DEVRE,"r"))==NULL)
+	{	
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	if(strcmp(uc,"devre.txt")==0)
+	{
+		//devre yazýlýr.
+		while ((c = fgetc(dosya)) != EOF) {		
+		printf("%c", c);
+		}
+	}
+	//LOG'a yapýlan iþlemler yazýlýr.
+	time_t timer=time(NULL);
+	fprintf(dosya4,"%s\t\t\t\t\t%s %s\t%s yuklendi\n",ctime(&timer),komut,DEVRE,DEVRE);
+	fprintf(dosya4,"\n");
+}
+void komutI(char komut[],struct lojik *d,char uc[])
+{
+	int i,j=0;
+	char c;						//Deðerleri yazdýrmak için kullanýlýr.
+	FILE *dosya4,*dosya2;		//Dosyalarý açmak için tanýmlanýrlar.
+	//LOG isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya4=fopen(LOG,"a"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//DEGER isimli dosyanýn açýlýp açýlmadýðý kontrl edilir.
+	if((dosya2=fopen(DEGER,"r"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	if(strcmp(uc,"deger.txt")==0)
+	{
+		//Devrenin uçlarý ve deðerleri yazýlýr.
+		while ((c = fgetc(dosya2)) != EOF) {		
+		printf("%c", c);
+		}
+	}
+	//LOG'a yapýlan iþlemler yazýlýr.
+	time_t timer=time(NULL);
+	fprintf(dosya4,"\n%s\t\t\t\t\t%s %s\tdegerler atandi\n",ctime(&timer),komut,DEGER);
+	fprintf(dosya4,"\n");
+}
+void komutH(char komut[],struct lojik *d,char uc[],int k,int dizi[])
+{
+	int nanosaniye=0,w=0;	
+	int i,j;
+	FILE *dosya4;	//Dosya açmak için tanýmlanýr.
+	//LOG isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya4=fopen(LOG,"a"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//LOG a yapýlan iþlemler yazýlýr.
+	time_t timer=time(NULL);
+	fprintf(dosya4,"\n%s\t\t\t\t\t\t%s %s\t\t%s girisi birlendi\n",ctime(&timer),komut,uc,uc);
+	fprintf(dosya4,"\n");
+	for(i=0;i<k;i++)
+	{
+		//Deðiþmesi istenilen ucun deðeri 1 yapýlýr.
+		if(strcmp(uc,d[i].tum)==0)
+		{
+			d[w].ilkDeger=d[i].deger2;
+			d[i].deger2=1;
+			d[w].sonDeger=d[i].deger2;
+		}
+	}
+	strcpy(d[w].devreUc,uc);
+	d[w].ns=nanosaniye;
+	w++;
+	nanosaniye++;
+	dizi[0]=nanosaniye;
+	dizi[1]=w;
+}
+
+void komutL(char komut[],struct lojik *d,char uc[],int k,int dizi[])
+{
+	int i,nanosaniye=0,w=0;
+	FILE *dosya4; //Dosya açmak için tanýmlanýr.
+	//LOG isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya4=fopen(LOG,"ab"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//LOG'a yapýlan iþlemler yazýlýr.
+	time_t timer=time(NULL);
+	fprintf(dosya4,"\n%s\t\t\t\t\t\t%s %s\t\t%s girisi sýfýrlandý\n",ctime(&timer),komut,uc,uc);
+	fprintf(dosya4,"\n");
+	for(i=0;i<k;i++)
+	{
+		//Deðiþtirilmesi istenen ucun deðeri 0 yapýlýr.
+		if(strcmp(uc,d[i].tum)==0)
+		{
+			d[w].ilkDeger=d[i].deger2;
+			d[i].deger2=0;
+			d[w].sonDeger=d[i].deger2;
+		}
+	}
+	strcpy(d[w].devreUc,uc);
+	d[w].ns=nanosaniye;
+	w++;
+	nanosaniye++;
+	dizi[0]=nanosaniye;
+	dizi[1]=w;
+}
+void komutS(struct lojik *d,int dizi[],char komut[])
+{
+	int i;
+	FILE *dosya4;	//Dosya açmak için tanýmlanýr.
+	//LOG isimli dosyanýn açýlýp açýlmadýðýný kontrol eder.
+	if((dosya4=fopen(LOG,"ab+"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//Devredeki deðiþimleri yazdýrýr.
+	for(i=0;i<dizi[1];i++)
+	{
+		printf("%dns : %s %d->%d\n",d[i].ns,d[i].devreUc,d[i].ilkDeger,d[i].sonDeger);
+	}
+	//LOG'a yapýlan iþlemler yazýlýr.
+	time_t timer=time(NULL);
+	fprintf(dosya4,"%s\t\t\t\t\t\t%s \t\t",ctime(&timer),komut);
+	for(i=0;i<dizi[1];i++)
+	{
+		fprintf(dosya4,"%dns:%s %d->%d\t\t\t\t\t\t\t\t\t\t\t",d[i].ns,d[i].devreUc,d[i].ilkDeger,d[i].sonDeger);
+	}
+}
+void komutG(struct lojik *d,char uc[],int k,char komut[])
+{
+	int i;
+	FILE *dosya4;	//Dosya açmak için tanýmlanýr.
+	//LOG isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya4=fopen(LOG,"ab+"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	for(i=0;i<k;i++)
+	{
+		//Yazdýrýlmasý istenen ucun son deðeri yazýlýr.
+		if(strcmp(uc,d[i].tum)==0)
+		{
+			printf("%s:%d\n",uc,d[i].deger2);
+			//LOG'a yapýlan iþlemler yazýlýr.
+			time_t timer=time(NULL);
+			fprintf(dosya4,"%s\t\t\t\t\t\t%s %s\t\t%s:%d",ctime(&timer),komut,uc,uc,d[i].deger2);
+		}
+	}
+}
+void komutGyildiz(struct lojik *d,int k,char komut[])
+{
+	int i;
+	FILE *dosya4;	//Dosya açmak için tanýmlanýr.
+	//LOG isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya4=fopen(LOG,"ab+"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//LOG'a yapýlan iþlemler yazýlýr.
+	time_t timer=time(NULL);
+	fprintf(dosya4,"%s\t\t\t\t\t\t%s \t\t",ctime(&timer),komut);
+	//Tüm uçlarýn son deðerleri yazýlýr.
+	for(i=0;i<k;i++)
+	{
+		printf("%s:%d\n",d[i].tum,d[i].deger2);
+		//LOG'a yapýlan iþlemler yazýlýr.
+		fprintf(dosya4,"%s:%d\t\t\t\t\t\t\t\t\t\t\t\t",d[i].tum,d[i].deger2);
+	}
+
+
+}
+void komutK(struct lojik *d,int dizi[],int k,char kapi_1[5][5],char kapi_2[5][5],char kapi_3[5][5],int j,int z,int x)
+{
+	char uc[10];
+	char komut[10]; 		
+	FILE *dosya3;	//Dosya açmak için tanýmlanýr.
+	//KOMUT isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya3=fopen(KOMUT,"r"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//KOMUT dosyasýndan okunan bilgilere göre iþlemler yapýlýr.
+	while(1)
+	{
+		fscanf(dosya3,"%s",komut);
+		if(strcmp(komut,"y")==0 || strcmp(komut,"Y")==0)
+		{
+			fscanf(dosya3,"%s",uc);
+			komutY(komut,uc);
+			
+		}
+		if(strcmp(komut,"i")==0 || strcmp(komut,"I")==0)
+		{	
+			fscanf(dosya3,"%s",uc);
+			komutI(komut,d,uc);
+			
+		}
+		if(strcmp(komut,"h")==0 || strcmp(komut,"H")==0)
+		{
+			fscanf(dosya3,"%s",uc);
+			komutH(komut,d,uc,k,dizi);
+			kapiIslem(d,uc,kapi_1,kapi_2,kapi_3,j,z,x,k,dizi);
+			
+		}
+		if(strcmp(komut,"l")==0 || strcmp(komut,"L")==0)
+		{
+			fscanf(dosya3,"%s",uc);
+			komutL(komut,d,uc,k,dizi);
+			kapiIslem(d,uc,kapi_1,kapi_2,kapi_3,j,z,x,k,dizi);
+			
+		}
+		if(strcmp(komut,"s")==0 || strcmp(komut,"S")==0)
+		{
+			komutS(d,dizi,komut);
+		}
+		if(strcmp(komut,"g")==0 || strcmp(komut,"G")==0)
+		{
+			fscanf(dosya3,"%s",uc);
+			komutG(d,uc,k,komut);
+		}
+		if(strcmp(komut,"g*")==0 || strcmp(komut,"G*")==0)
+		{
+
+			komutGyildiz(d,k,komut);
+		}
+		if(strcmp(komut,"c")==0 || strcmp(komut,"C")==0)
+		{
+			break;
+		}
+	}
+}
+int main()
+{
+	
+	struct lojik d[20],devre[10];
+	int i,j,dizi[2];
+	int nanosaniye=0,w=0;
+	char giris[5],komut[5];
+	FILE *dosya,*dosya1,*dosya2,*dosya3,*dosya4;	//Dosyalarý açmak için tanýmlanýrlar.
+	char uc[10];			//Komuttan sonra istenen bilgileri tutmak için kullanýlýr.
+	char c;										
+	//DEVRE isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya=fopen(DEVRE,"r"))==NULL)
+	{	
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//BASKA isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya1=fopen(BASKA,"r"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//DEGER isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya2=fopen(DEGER,"r"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//KOMUT isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya3=fopen(KOMUT,"r"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+	//LOG isimli dosyanýn açýlýp açýlmadýðý kontrol edilir.
+	if((dosya4=fopen(LOG,"w"))==NULL)
+	{
+		printf("Dosya acilamadi");
+		exit(1);
+	}
+    //lOG'a yazdýrma yapýlýr.         	
+	fprintf(dosya4,"zaman\t\t\t\t\t\tkomut\t\t\t\tcikti\n");
+	fseek(dosya2,0,SEEK_SET);
+	int q=0;
+	while ((c = fgetc(dosya2))!= EOF) {		
+		q++;
+	}
+
+	//DEGER'den uçlarýn deðerleri okutulur.
+	fseek(dosya2,2,SEEK_SET);	
+	j=0;
+	for(i=4;i<=q;i+=4)
+	{
+		fscanf(dosya2,"%s",d[j].deger);
+		j++;
+		fseek(dosya2,2+i,SEEK_SET);
+	}
+	//DEGER'den uçlarýn isimleri okutulur.
+	i=0;
+	int k=0;
+	fseek(dosya2,0,SEEK_SET);
+	while(i<q)
+	{
+		fscanf(dosya2,"%1s",d[k].tum);
+		k++;
+		i+=4;
+		fseek(dosya2,i,SEEK_SET);
+	}
+	//Okutulan deðerler int'e çevirilir.
+	for(i=0;i<j;i++)
+	{
+		d[i].deger2=atoi(d[i].deger);
+	}
+	//Okutulan deðerler int'e çevirilir.
+	for(i=0;i<j;i++)
+	{
+		d[i].ilkDeger=atoi(d[i].deger);
+	}
+	
+
+	char kapi_1[5][5],kapi_2[5][5],kapi_3[5][5]; //Kapý bilgilerini tutmak için tanýmlanýrlar.	
+	char bos[5],tmp[30];				        //bos[] ve tmp[] okunmasý gereksiz olan bilgiler için tanýmlandý.
+	fseek(dosya,0,SEEK_SET);	
+	//kapý_1'in bilgilerinin yazmaya baþlandýðý yer bulunur.								
+	while(1)
+	{
+		fscanf(dosya,"%s",tmp);
+		if(strcmp(tmp,".kapi")==0)
+		{
+			break;
+		}
+	}
+	//kapi_1'in bilgileri alýnýr.
+	fscanf(dosya,"%s",kapi_1[0]);
+	fscanf(dosya,"%s",bos);
+	fscanf(dosya,"%s",kapi_1[1]);
+	j=2;
+	while(1)
+	{
+		fscanf(dosya,"%s",kapi_1[j]);
+		if(isdigit(kapi_1[j][0]))
+		{
+			break;
+		}
+		j++;
+	}
+	int z;
+	//kapý_3'ün bilgilerinin yazmaya baþlandýðý yer bulunur.
+	while(1)
+	{
+		fscanf(dosya,"%s",tmp);
+		if(strcmp(tmp,".kapi")==0)
+		{
+			break;
+		}
+	}
+	//kapi_3'ün bilgileri alýnýr.
+	fscanf(dosya,"%s",kapi_3[0]);
+	fscanf(dosya,"%s",bos);
+	fscanf(dosya,"%s",kapi_3[1]);
+	z=2;
+	while(1)
+	{
+		fscanf(dosya,"%s",kapi_3[z]);
+		if(isdigit(kapi_3[z][0]))
+		{
+	
+			break;
+		}
+		z++;
+	}
+	fseek(dosya1,0,SEEK_SET);
+	//kapý_2'nin bilgilerinin yazmaya baþlandýðý yer bulunur.
+	while(1)
+	{
+		fscanf(dosya1,"%s",tmp);
+		if(strcmp(tmp,".kapi")==0)
+		{
+			break;
+		}
+	}
+	//kapi_2'nin bilgileri alýnýr.
+	fscanf(dosya1,"%s",kapi_2[0]);
+	fscanf(dosya1,"%s",bos);
+	fscanf(dosya1,"%s",kapi_2[1]);
+	int x=2;
+	while(1)
+	{
+		fscanf(dosya1,"%s",kapi_2[x]);
+		if(isdigit(kapi_2[x][0]))
+		{
+	
+			break;
+		}
+		x++;
+	}
+	//Komut girilmesi istenir ve istenilen komuta göre fonksiyon çaðýrýlýr.
+	while(1)
+	{
+		
+		printf(">");
+		scanf("%s",&komut);
+		if(strcmp(komut,"y")==0 || strcmp(komut,"Y")==0)
+		{
+			
+			getchar();
+			scanf("%[^\n]",uc);
+			komutY(komut,uc);
+			
+		}
+		else if(strcmp(komut,"i")==0 || strcmp(komut,"I")==0)
+		{
+			getchar();
+			scanf("%[^\n]",uc);
+			komutI(komut,d,uc);
+			
+		} 
+		else if(strcmp(komut,"h")==0 || strcmp(komut,"H")==0)
+		{
+			getchar();
+			scanf("%[^\n]",uc);
+			komutH(komut,d,uc,k,dizi);
+			kapiIslem(d,uc,kapi_1,kapi_2,kapi_3,j,z,x,k,dizi);
+			
+		}
+		else if(strcmp(komut,"l")==0 || strcmp(komut,"L")==0)
+		{
+			getchar();
+			scanf("%[^\n]",uc);
+			komutL(komut,d,uc,k,dizi);
+			kapiIslem(d,uc,kapi_1,kapi_2,kapi_3,j,z,x,k,dizi);
+			
+		}
+		else if(strcmp(komut,"s")==0 || strcmp(komut,"S")==0)
+		{
+			komutS(d,dizi,komut);
+		}
+		else if(strcmp(komut,"g")==0 || strcmp(komut,"G")==0)
+		{
+			getchar();
+			scanf("%[^\n]",uc);
+			komutG(d,uc,k,komut);
+		}
+		else if(strcmp(komut,"g*")==0 || strcmp(komut,"G*")==0)
+		{
+
+			komutGyildiz(d,k,komut);
+		}
+		else if(strcmp(komut,"k")==0 || strcmp(komut,"K")==0)
+		{
+			komutK(d,dizi,k,kapi_1,kapi_2,kapi_3,j,z,x);
+		}
+		else if(strcmp(komut,"c")==0 || strcmp(komut,"C")==0)
+		{
+			break;
+		}
+		else
+		{
+			printf("Hata!!!Yanlis komut tekrar giriniz\n");
+		}
+		
+	}
+	
+	//Dosyalar kapatýlýr.
+	fclose(dosya);	
+	fclose(dosya1);
+	fclose(dosya2);
+	fclose(dosya3);
+	fclose(dosya4);
+	
+}
